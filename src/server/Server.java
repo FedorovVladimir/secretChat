@@ -3,12 +3,20 @@ package server;
 import network.TCPConnection;
 import network.TCPConnectionListener;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Server implements TCPConnectionListener {
+
+    private long a;
+    private long g;
+    private long p;
+    private long A;
+    private long K;
+    private boolean isConnect;
 
     private final List<TCPConnection> connections = new ArrayList<>();
 
@@ -33,13 +41,31 @@ public class Server implements TCPConnectionListener {
 
     @Override
     public synchronized void onConnectionReady(TCPConnection tcpConnection) {
-        connections.add(tcpConnection);
-        sendToAllConnections("Client connected: " + tcpConnection.toString());
+        a = getRandom();
+        g = getRandom();
+        p = getRandom();
+        A = pow(g, a) % p;
+        tcpConnection.sendString(g + " " + p + " " + A);
     }
 
     @Override
     public synchronized void onReceiveString(TCPConnection tcpConnection, String value) {
-        sendToAllConnections(value);
+        if (!isConnect) {
+            isConnect = true;
+            long B = Long.parseLong(value);
+            K = pow(B, a) % p;
+            connections.add(tcpConnection);
+        } else {
+            System.out.println(value);
+        }
+    }
+
+    private long pow(long b, long a) {
+        long ret = 1;
+        for (int i = 0; i < a; i++) {
+            ret *= b;
+        }
+        return ret;
     }
 
     @Override
@@ -58,5 +84,9 @@ public class Server implements TCPConnectionListener {
         for (TCPConnection connection : connections) {
             connection.sendString(value);
         }
+    }
+
+    long getRandom() {
+        return (long) (Math.random() * 10) + 1;
     }
 }
